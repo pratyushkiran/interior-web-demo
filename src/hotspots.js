@@ -1,29 +1,42 @@
-
 import * as THREE from 'three';
 
-export function addHotspot(scene, position, labelText) {
-  const sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(0.1, 16, 16),
+export function createHotspot(scene, position, labelText) {
+  const group = new THREE.Group();
+
+  // Red dot
+  const dot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.05, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xff4444 })
   );
-  sphere.position.copy(position);
-  scene.add(sphere);
 
-  const div = document.createElement('div');
-  div.className = 'hotspot-label';
-  div.innerText = labelText;
-  document.body.appendChild(div);
+  // Label canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 64;
 
-  return { sphere, div };
-}
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect(0, 0, 256, 64);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '24px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(labelText, 128, 42);
 
-export function updateHotspots(camera, hotspots) {
-  hotspots.forEach(h => {
-    const pos = h.sphere.position.clone();
-    pos.project(camera);
-    const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
-    const y = (-pos.y * 0.5 + 0.5) * window.innerHeight;
-    h.div.style.transform =
-      `translate(-50%, -50%) translate(${x}px, ${y}px)`;
-  });
+  const texture = new THREE.CanvasTexture(canvas);
+
+  const label = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true
+    })
+  );
+
+  label.scale.set(0.8, 0.2, 1);
+  label.position.y = 0.3;
+
+  group.add(dot);
+  group.add(label);
+  group.position.set(position.x, position.y, position.z);
+
+  scene.add(group);
 }

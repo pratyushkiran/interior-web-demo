@@ -1,38 +1,42 @@
-
-import * as THREE from 'three';
 import { scene, renderer } from './scene';
 import { camera, controls } from './camera';
 import { loadRoom } from './loader';
 import { setupLights, setDay, setNight } from './lighting';
 import { enableClickToMove } from './navigation';
-import { addHotspot, updateHotspots } from './hotspots';
+import { createHotspot } from './hotspots';
 
 document.body.appendChild(renderer.domElement);
 setupLights(scene);
 
-const hotspots = [];
-
 loadRoom(scene, (room) => {
+  // Hide loader
   document.getElementById('loader').style.display = 'none';
 
-  let floor;
-  room.traverse(o => {
-    if (o.name.toLowerCase().includes('floor')) floor = o;
-  });
+  // Enable click-to-move (floor must be named "Floor")
+  const floor = room.getObjectByName('Floor');
+  if (floor) {
+    enableClickToMove(floor);
+  } else {
+    console.warn('Floor mesh not found. Name it "Floor" in Blender.');
+  }
 
-  if (floor) enableClickToMove(floor);
+  // Hotspots
+  createHotspot(scene, { x: 0, y: 0.6, z: 0 }, 'Bed');
+  createHotspot(scene, { x: -1.5, y: 1.2, z: 1.5 }, 'Chair');
+  createHotspot(scene, { x: -2, y: 0.9, z: 0.8 }, 'Table');
+  createHotspot(scene, { x: 0.5, y: 1.2, z: 1.7 }, 'Window');
+  createHotspot(scene, { x: -1.5, y: 0.9, z: -1.1 }, 'Closet');
 
-  hotspots.push(addHotspot(scene, new THREE.Vector3(0, 0.6, 0), 'Bed'));
-  hotspots.push(addHotspot(scene, new THREE.Vector3(1, 0.6, -1), 'Chair'));
 });
 
-document.getElementById('dayBtn').addEventListener('click', setDay);
-document.getElementById('nightBtn').addEventListener('click', setNight);
+// UI buttons
+document.getElementById('dayBtn').onclick = setDay;
+document.getElementById('nightBtn').onclick = setNight;
 
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
-  updateHotspots(camera, hotspots);
   renderer.render(scene, camera);
 }
+
 animate();
